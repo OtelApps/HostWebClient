@@ -5,8 +5,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
 import { ServiceRequestProvider } from './contexts/ServiceRequestContext';
+import { registerNotificationWorker } from './lib/webNotifications';
 import './i18n';
 import './index.css';
+
+void registerNotificationWorker();
 
 const queryClient = new QueryClient({
   defaultOptions: {

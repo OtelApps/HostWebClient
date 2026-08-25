@@ -103,13 +103,3 @@ export function takeSolvedNotifications(
 
   return solved;
 }
-
-export function notifyGuestBrowser(title: string, body: string): void {
-  if (typeof Notification === 'undefined') return;
-  if (Notification.permission !== 'granted') return;
-  try {
-    new Notification(title, { body, icon: '/favicon.svg' });
-  } catch {
-    // Safari / insecure context
-  }
-}

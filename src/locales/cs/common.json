@@ -204,5 +204,14 @@
   "requestStatusPending": "{{text}} čeká na zpracování.",
   "requestStatusInProgress": "{{text}} se právě vyřizuje.",
   "requestStatusRejected": "{{text}} byla zamítnuta.",
-  "requestStatusArchived": "{{text}} byla uzavřena."
+  "requestStatusArchived": "{{text}} byla uzavřena.",
+  "enableNotificationsTitle": "Zapnout oznámení",
+  "enableNotificationsLead": "Dáme vám vědět, až bude objednávka hotová nebo když recepce napíše do chatu — i když zrovna koukáte jinam.",
+  "enableNotificationsCta": "Povolit oznámení",
+  "enableNotificationsLater": "Teď ne",
+  "notificationsEnabled": "Oznámení v prohlížeči jsou zapnutá.",
+  "notificationsBlocked": "Oznámení jsou v prohlížeči zablokovaná. Zapněte je v nastavení webu.",
+  "enableNotificationsProfile": "Zapnout oznámení v prohlížeči",
+  "conciergeNotifyTitle": "Nová zpráva od concierge",
+  "conciergeNewMessage": "Máte novou zprávu v chatu."
 }

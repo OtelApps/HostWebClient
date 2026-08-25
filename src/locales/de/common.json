@@ -204,5 +204,14 @@
   "requestStatusPending": "{{text}} wartet auf Bearbeitung.",
   "requestStatusInProgress": "{{text}} wird gerade vorbereitet.",
   "requestStatusRejected": "{{text}} konnte nicht erfüllt werden.",
-  "requestStatusArchived": "{{text}} wurde geschlossen."
+  "requestStatusArchived": "{{text}} wurde geschlossen.",
+  "enableNotificationsTitle": "Benachrichtigungen aktivieren",
+  "enableNotificationsLead": "Wir benachrichtigen Sie, wenn eine Bestellung fertig ist oder die Rezeption im Chat schreibt — auch auf einer anderen Seite.",
+  "enableNotificationsCta": "Benachrichtigungen erlauben",
+  "enableNotificationsLater": "Jetzt nicht",
+  "notificationsEnabled": "Browser-Benachrichtigungen sind aktiv.",
+  "notificationsBlocked": "Benachrichtigungen sind im Browser blockiert. Aktivieren Sie sie in den Website-Einstellungen.",
+  "enableNotificationsProfile": "Browser-Benachrichtigungen aktivieren",
+  "conciergeNotifyTitle": "Neue Concierge-Nachricht",
+  "conciergeNewMessage": "Sie haben eine neue Chat-Nachricht."
 }

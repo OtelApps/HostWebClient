@@ -2,13 +2,63 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { KeyRound, Smartphone } from 'lucide-react';
+import { Bell, KeyRound, Smartphone } from 'lucide-react';
 
 import { Button, EmptyBlock, ErrorBlock, LoadingBlock } from '../components/ui/Button';
 import { PageHeader } from '../components/ui/PageHeader';
 import { useAuth } from '../contexts/AuthContext';
 import { clearGuestIdentity, getGuestIdentity, type GuestIdentity } from '../lib/guestIdentity';
+import {
+  getNotificationPermission,
+  notificationsSupported,
+  requestNotificationPermission,
+} from '../lib/webNotifications';
 import { fetchGuestConciergeCaseSummaries } from '../services/supabase/concierge';
+
+function NotificationPrefs() {
+  const { t } = useTranslation();
+  const [permission, setPermission] = useState(getNotificationPermission);
+  const [asking, setAsking] = useState(false);
+
+  if (!notificationsSupported() || permission === 'unsupported') return null;
+
+  return (
+    <section className="mt-4 rounded-3xl border border-line bg-white p-6">
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <Bell className="size-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-header">{t('enableNotificationsTitle')}</p>
+          {permission === 'granted' ? (
+            <p className="mt-1 text-sm text-muted">{t('notificationsEnabled')}</p>
+          ) : null}
+          {permission === 'denied' ? (
+            <p className="mt-1 text-sm text-muted">{t('notificationsBlocked')}</p>
+          ) : null}
+          {permission === 'default' ? (
+            <>
+              <p className="mt-1 text-sm text-muted">{t('enableNotificationsLead')}</p>
+              <Button
+                className="mt-3"
+                disabled={asking}
+                onClick={() => {
+                  setAsking(true);
+                  void requestNotificationPermission().then(() => {
+                    setPermission(getNotificationPermission());
+                    setAsking(false);
+                  });
+                }}
+              >
+                {t('enableNotificationsProfile')}
+              </Button>
+            </>
+          ) : null}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export function ProfilePage() {
   const { t, i18n } = useTranslation();
@@ -47,6 +97,8 @@ export function ProfilePage() {
           </p>
         ) : null}
       </section>
+
+      <NotificationPrefs />
 
       <div className="mt-4 grid gap-3">
         <Link to="/stay" className="rounded-2xl border border-line bg-white px-4 py-3 font-medium">

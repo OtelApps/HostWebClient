@@ -204,5 +204,14 @@
   "requestStatusPending": "{{text}} is waiting to be processed.",
   "requestStatusInProgress": "{{text}} is being prepared.",
   "requestStatusRejected": "{{text}} could not be fulfilled.",
-  "requestStatusArchived": "{{text}} was closed."
+  "requestStatusArchived": "{{text}} was closed.",
+  "enableNotificationsTitle": "Turn on notifications",
+  "enableNotificationsLead": "We’ll notify you when an order is ready or when reception replies in chat — even if you’re on another page.",
+  "enableNotificationsCta": "Allow notifications",
+  "enableNotificationsLater": "Not now",
+  "notificationsEnabled": "Browser notifications are on.",
+  "notificationsBlocked": "Notifications are blocked in the browser. Enable them in site settings.",
+  "enableNotificationsProfile": "Enable browser notifications",
+  "conciergeNotifyTitle": "New concierge message",
+  "conciergeNewMessage": "You have a new chat message."
 }

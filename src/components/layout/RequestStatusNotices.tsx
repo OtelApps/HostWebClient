@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Check, X } from 'lucide-react';
 
 import { useServiceRequests } from '../../contexts/ServiceRequestContext';
-import { notifyGuestBrowser } from '../../lib/serviceRequestStatusChanges';
+import { showGuestNotification } from '../../lib/webNotifications';
 import { Button } from '../ui/Button';
 import { StatusBadge } from '../ui/StatusBadge';
 
@@ -25,6 +25,7 @@ export function RequestStatusNotices() {
     dismissStatusAlert,
   } = useServiceRequests();
   const notifiedIdRef = useRef<string | null>(null);
+  const alertNotifiedRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!solvedModalRequest) return;
@@ -33,7 +34,12 @@ export function RequestStatusNotices() {
     document.title = `✓ ${title} — OtelApps`;
     if (notifiedIdRef.current !== solvedModalRequest.id) {
       notifiedIdRef.current = solvedModalRequest.id;
-      notifyGuestBrowser(title, solvedModalRequest.request_text || t('requestSolvedLead'));
+      void showGuestNotification({
+        title,
+        body: solvedModalRequest.request_text || t('requestSolvedLead'),
+        url: `/requests/${solvedModalRequest.id}`,
+        tag: `request-solved-${solvedModalRequest.id}`,
+      });
     }
     return () => {
       document.title = previous;
@@ -45,6 +51,22 @@ export function RequestStatusNotices() {
     const id = window.setTimeout(() => dismissStatusAlert(), 7000);
     return () => window.clearTimeout(id);
   }, [dismissStatusAlert, solvedModalRequest, statusAlert]);
+
+  useEffect(() => {
+    if (!statusAlert || solvedModalRequest) return;
+    const key = `${statusAlert.requestId}:${statusAlert.status}`;
+    if (alertNotifiedRef.current === key) return;
+    alertNotifiedRef.current = key;
+    const body = TOAST_KEYS[statusAlert.status]
+      ? t(TOAST_KEYS[statusAlert.status], { text: statusAlert.body })
+      : statusAlert.body;
+    void showGuestNotification({
+      title: t('requestStatusToastTitle'),
+      body,
+      url: `/requests/${statusAlert.requestId}`,
+      tag: `request-${key}`,
+    });
+  }, [solvedModalRequest, statusAlert, t]);
 
   const toastBody =
     statusAlert && TOAST_KEYS[statusAlert.status]
