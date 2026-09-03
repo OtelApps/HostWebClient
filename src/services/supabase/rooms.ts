@@ -1,4 +1,5 @@
 import { SupabaseTables } from './tables';
+import { getHotelId } from '../../lib/hotel';
 import { getSupabase, supabaseConfigured } from '../../lib/supabase';
 
 export type HotelRoomTypeRow = {
@@ -20,10 +21,13 @@ export type HotelRoomTypeFeatureRow = {
 /** Seznam typů pokojů (Nabídka pokojů) */
 export async function fetchHotelRoomTypes(): Promise<HotelRoomTypeRow[] | null> {
   if (!supabaseConfigured) return null;
+  const hotelId = await getHotelId();
+  if (!hotelId) return null;
 
   const { data, error } = await getSupabase()
     .from(SupabaseTables.hotelRoomTypes)
     .select('id, slug, title, list_description, detail_info, size_text, image_key, sort_order')
+    .eq('hotel_id', hotelId)
     .eq('is_active', true)
     .order('sort_order');
 
@@ -37,12 +41,15 @@ export async function fetchHotelRoomTypeDetail(roomSlug: string): Promise<{
   features: string[];
 } | null> {
   if (!supabaseConfigured) return null;
+  const hotelId = await getHotelId();
+  if (!hotelId) return null;
 
   const supabase = getSupabase();
 
   const { data: room, error: roomError } = await supabase
     .from(SupabaseTables.hotelRoomTypes)
     .select('id, slug, title, list_description, detail_info, size_text, image_key, sort_order')
+    .eq('hotel_id', hotelId)
     .eq('slug', roomSlug)
     .eq('is_active', true)
     .maybeSingle();

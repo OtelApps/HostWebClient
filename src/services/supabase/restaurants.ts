@@ -1,5 +1,19 @@
 import { SupabaseTables } from './tables';
+import { getHotelId } from '../../lib/hotel';
 import { getSupabase, supabaseConfigured } from '../../lib/supabase';
+
+async function findVenueId(venueSlug: string): Promise<string | null> {
+  const hotelId = await getHotelId();
+  if (!hotelId) return null;
+  const { data, error } = await getSupabase()
+    .from(SupabaseTables.venues)
+    .select('id')
+    .eq('hotel_id', hotelId)
+    .eq('slug', venueSlug)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.id ?? null;
+}
 
 export type VenueRow = {
   id: string;
@@ -44,12 +58,15 @@ export function formatPriceCzk(amount: number): string {
 /** Seznam restaurací a barů (obrazovka Restaurace & bary) */
 export async function fetchVenues(): Promise<VenueRow[] | null> {
   if (!supabaseConfigured) return null;
+  const hotelId = await getHotelId();
+  if (!hotelId) return null;
 
   const { data, error } = await getSupabase()
     .from(SupabaseTables.venues)
     .select(
       'id, slug, title, venue_type, description, schedule_summary, image_key, list_label, sort_order'
     )
+    .eq('hotel_id', hotelId)
     .eq('is_active', true)
     .order('sort_order');
 
@@ -67,11 +84,15 @@ export async function fetchVenueDetail(venueSlug: string): Promise<{
 
   const supabase = getSupabase();
 
+  const hotelId = await getHotelId();
+  if (!hotelId) return null;
+
   const { data: venue, error: venueError } = await supabase
     .from(SupabaseTables.venues)
     .select(
       'id, slug, title, venue_type, description, schedule_summary, image_key, list_label, sort_order'
     )
+    .eq('hotel_id', hotelId)
     .eq('slug', venueSlug)
     .eq('is_active', true)
     .maybeSingle();
@@ -112,11 +133,8 @@ export async function fetchMenuCategoryList(
 
   const supabase = getSupabase();
 
-  const { data: venue } = await supabase
-    .from(SupabaseTables.venues)
-    .select('id')
-    .eq('slug', venueSlug)
-    .maybeSingle();
+  const venueId = await findVenueId(venueSlug);
+  const venue = venueId ? { id: venueId } : null;
 
   if (!venue) return null;
 
@@ -145,11 +163,8 @@ export async function fetchMenuTitle(venueSlug: string, menuSlug: string): Promi
 
   const supabase = getSupabase();
 
-  const { data: venue } = await supabase
-    .from(SupabaseTables.venues)
-    .select('id')
-    .eq('slug', venueSlug)
-    .maybeSingle();
+  const venueId = await findVenueId(venueSlug);
+  const venue = venueId ? { id: venueId } : null;
 
   if (!venue) return null;
 
@@ -183,11 +198,8 @@ export async function fetchMenuCategoriesWithItems(
 
   const supabase = getSupabase();
 
-  const { data: venue } = await supabase
-    .from(SupabaseTables.venues)
-    .select('id')
-    .eq('slug', venueSlug)
-    .maybeSingle();
+  const venueId = await findVenueId(venueSlug);
+  const venue = venueId ? { id: venueId } : null;
 
   if (!venue) return null;
 
@@ -254,11 +266,8 @@ export async function fetchMenuItemDetail(
 
   const supabase = getSupabase();
 
-  const { data: venue } = await supabase
-    .from(SupabaseTables.venues)
-    .select('id')
-    .eq('slug', venueSlug)
-    .maybeSingle();
+  const venueId = await findVenueId(venueSlug);
+  const venue = venueId ? { id: venueId } : null;
 
   if (!venue) return null;
 

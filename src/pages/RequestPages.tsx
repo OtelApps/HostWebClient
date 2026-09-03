@@ -8,6 +8,7 @@ import { CatalogCard, Cover, HoursList } from '../components/ui/CatalogCard';
 import { ConfirmRequestDialog } from '../components/ui/ConfirmRequestDialog';
 import { PageHeader } from '../components/ui/PageHeader';
 import { StatusBadge } from '../components/ui/StatusBadge';
+import { useHotelModules } from '../contexts/ModulesContext';
 import { useServiceRequests } from '../contexts/ServiceRequestContext';
 import { useSubmitServiceRequest } from '../hooks/useSubmitServiceRequest';
 import { fetchHotelHousekeeping } from '../services/supabase/housekeeping';
@@ -34,6 +35,7 @@ import {
 
 export function RequestsHubPage() {
   const { t } = useTranslation();
+  const { isEnabled } = useHotelModules();
   const { activeRequests, requests } = useServiceRequests();
   const [now, setNow] = useState(() => Date.now());
   const recentDone = useMemo(() => getRecentDoneRequest(requests, now), [now, requests]);
@@ -83,30 +85,38 @@ export function RequestsHubPage() {
         <p className="mb-6 text-sm text-muted">{t('noActiveRequests')}</p>
       )}
       <div className="grid gap-4 sm:grid-cols-2">
-        <CatalogCard
-          to="/requests/housekeeping"
-          title={t('housekeeping')}
-          image="housekeeping"
-          fallbackKey="housekeeping"
-        />
-        <CatalogCard
-          to="/requests/supplies"
-          title={t('suppliesShort')}
-          image="headerDoplnky"
-          fallbackKey="toiletries"
-        />
-        <CatalogCard
-          to="/requests/maintenance"
-          title={t('maintenanceShort')}
-          image="headerMaintenance"
-          fallbackKey="maintenance"
-        />
-        <CatalogCard
-          to="/requests/room-service"
-          title={t('roomServiceShort')}
-          image="roomServiceIcon"
-          fallbackKey="roomServiceIcon"
-        />
+        {isEnabled('laundry') ? (
+          <CatalogCard
+            to="/requests/housekeeping"
+            title={t('housekeeping')}
+            image="housekeeping"
+            fallbackKey="housekeeping"
+          />
+        ) : null}
+        {isEnabled('amenities') ? (
+          <CatalogCard
+            to="/requests/supplies"
+            title={t('suppliesShort')}
+            image="headerDoplnky"
+            fallbackKey="toiletries"
+          />
+        ) : null}
+        {isEnabled('issues_repairs') ? (
+          <CatalogCard
+            to="/requests/maintenance"
+            title={t('maintenanceShort')}
+            image="headerMaintenance"
+            fallbackKey="maintenance"
+          />
+        ) : null}
+        {isEnabled('room_service') ? (
+          <CatalogCard
+            to="/requests/room-service"
+            title={t('roomServiceShort')}
+            image="roomServiceIcon"
+            fallbackKey="roomServiceIcon"
+          />
+        ) : null}
       </div>
     </div>
   );

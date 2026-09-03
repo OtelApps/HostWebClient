@@ -1,4 +1,5 @@
 import { SupabaseTables } from './tables';
+import { getHotelId } from '../../lib/hotel';
 import { getSupabase, supabaseConfigured } from '../../lib/supabase';
 
 export type HotelPlaceRow = {
@@ -21,12 +22,15 @@ export type HotelPlaceRow = {
 /** Aktivní místa hotelu pro mapu a trip planner. */
 export async function fetchHotelPlaces(): Promise<HotelPlaceRow[] | null> {
   if (!supabaseConfigured) return null;
+  const hotelId = await getHotelId();
+  if (!hotelId) return null;
 
   const { data, error } = await getSupabase()
     .from(SupabaseTables.hotelPlaces)
     .select(
       'id, slug, name, description, long_description, address, latitude, longitude, category, opening_hours, admission, image_url, is_recommended, sort_order'
     )
+    .eq('hotel_id', hotelId)
     .eq('is_active', true)
     .order('sort_order', { ascending: true })
     .order('name', { ascending: true });

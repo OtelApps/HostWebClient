@@ -94,6 +94,7 @@
   "empty": "Zatím tu nic není.",
   "error": "Nepodařilo se načíst data.",
   "retry": "Zkusit znovu",
+  "configUnavailable": "Hotelovou aplikaci teď nejde spustit. Zkontroluj připojení a zkus to znovu.",
   "confirm": "Potvrdit",
   "send": "Odeslat",
   "cancel": "Zrušit",

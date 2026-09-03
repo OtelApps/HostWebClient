@@ -1,4 +1,5 @@
 import { SupabaseTables } from './tables';
+import { getHotelId } from '../../lib/hotel';
 import { getSupabase, supabaseConfigured } from '../../lib/supabase';
 
 export type ParkingTopicRow = {
@@ -17,12 +18,15 @@ export type ParkingTopicRow = {
 /** Seznam položek parkování */
 export async function fetchParkingTopics(): Promise<ParkingTopicRow[] | null> {
   if (!supabaseConfigured) return null;
+  const hotelId = await getHotelId();
+  if (!hotelId) return null;
 
   const { data, error } = await getSupabase()
     .from(SupabaseTables.hotelParkingTopics)
     .select(
       'id, slug, title, list_description, detail_info, list_image_key, detail_image_key, navigation_screen, external_url, sort_order'
     )
+    .eq('hotel_id', hotelId)
     .eq('is_active', true)
     .order('sort_order');
 
@@ -33,12 +37,15 @@ export async function fetchParkingTopics(): Promise<ParkingTopicRow[] | null> {
 /** Detail parkování v hotelu */
 export async function fetchParkingTopicDetail(topicSlug: string): Promise<ParkingTopicRow | null> {
   if (!supabaseConfigured) return null;
+  const hotelId = await getHotelId();
+  if (!hotelId) return null;
 
   const { data, error } = await getSupabase()
     .from(SupabaseTables.hotelParkingTopics)
     .select(
       'id, slug, title, list_description, detail_info, list_image_key, detail_image_key, navigation_screen, external_url, sort_order'
     )
+    .eq('hotel_id', hotelId)
     .eq('slug', topicSlug)
     .eq('is_active', true)
     .maybeSingle();

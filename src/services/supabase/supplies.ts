@@ -1,4 +1,5 @@
 import { SupabaseTables } from './tables';
+import { getHotelId } from '../../lib/hotel';
 import { getSupabase, supabaseConfigured } from '../../lib/supabase';
 
 export type HotelSuppliesHourRow = {
@@ -37,6 +38,8 @@ export async function fetchHotelSupplies(
   suppliesSlug = 'doplnky'
 ): Promise<HotelSuppliesData | null> {
   if (!supabaseConfigured) return null;
+  const hotelId = await getHotelId();
+  if (!hotelId) return null;
 
   const supabase = getSupabase();
 
@@ -45,6 +48,7 @@ export async function fetchHotelSupplies(
     .select(
       'id, slug, title, description, schedule_summary, header_image_key, max_quantity_per_item'
     )
+    .eq('hotel_id', hotelId)
     .eq('slug', suppliesSlug)
     .eq('is_active', true)
     .maybeSingle();

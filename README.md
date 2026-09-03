@@ -44,31 +44,35 @@ Odkazy do App Store / Google Play se berou z env (`VITE_APP_STORE_URL`, `VITE_PL
 | Mapa | Leaflet + react-leaflet |
 | Identita hosta | `localStorage` (stejné klíče jako mobilní AsyncStorage) |
 
-**Žádné staff API.** Obsah, požadavky a chat data jdou přímo do Supabase (anon klíč + RPC), stejně jako v mobilu. Concierge AI orchestrátor je Laravel WebAdmin:
+**Žádné staff API.** Obsah, požadavky a chat data jdou přímo do Supabase (anon klíč + RPC), stejně jako v mobilu. Laravel WebAdmin drží hotelový config a concierge orchestrátor:
 
-`POST /api/concierge/guest/{on-message,ensure-reply,escalate,satisfaction,presence}`
+`GET /api/public/hotel/{slug}/config`  
+`POST /api/concierge/guest/{access,on-message,ensure-reply,escalate,satisfaction,presence}`
 
 ```
 Prohlížeč
-  ├─ Supabase (anon)     → katalogy, service requests, concierge CRUD
-  └─ WebAdmin Laravel    → bot, překlad, eskalace, presence
+  ├─ WebAdmin Laravel    → hotel config (moduly), bot, překlad, eskalace, presence
+  └─ Supabase (anon)     → katalogy, service requests, concierge CRUD
 ```
 
 ## Rychlý start
 
 ```bash
-cp .env.example .env    # doplň VITE_SUPABASE_URL a VITE_SUPABASE_ANON_KEY
+cp .env.example .env    # doplň VITE_SUPABASE_*, VITE_HOTEL_SLUG, VITE_WEBADMIN_URL
 npm install
-npm run dev             # http://127.0.0.1:5173
+npm run dev             # http://127.0.0.1:5173  → redirect na /h/{slug}/
 ```
 
-Stejné Supabase údaje jako v mobilní appce (`EXPO_PUBLIC_*` → `VITE_*`).
+Hotel z URL: **`/h/{slug}/…`**. Když path prefix chybí, web přesměruje na `/h/{VITE_HOTEL_SLUG || default}{původní path}`. Existující routy (`/info`, `/chat`) zůstávají pod basename. HQ odkazy: `https://hostweb…/h/test-hotel/`.
 
-### Concierge (volitelné, ale potřeba pro bota)
+Stejné Supabase údaje jako v mobilní appce (`EXPO_PUBLIC_*` → `VITE_*`). Stejný `VITE_HOTEL_SLUG` jako `OTELAPPS_HOTEL_SLUG` ve WebAdminu.
+
+**WebAdmin musí běžet.** Při startu web tahá public config. Bez něj se appka nenačte (loading / chyba + zkusit znovu). V `npm run dev` Vite proxyuje `/api/public/hotel` i `/api/concierge/guest` na `VITE_WEBADMIN_URL`.
+
+### Concierge (bot)
 
 1. Spusť WebAdmin: `php artisan serve` (a queue worker, viz README WebAdminu).
 2. V `.env` nech `VITE_WEBADMIN_URL=http://127.0.0.1:8000`.
-3. Vite v devu proxyuje `/api/concierge/guest` na tenhle origin (bez CORS).
 
 V produkci buď reverse proxy na stejné doméně, nebo nastav `VITE_CONCIERGE_API_BASE` / CORS ve WebAdminu (`CORS_ALLOWED_ORIGINS`, `config/cors.php`).
 
@@ -92,7 +96,11 @@ Demo účty (shoda s mobilní appkou):
 
 Jiná kombinace vytvoří ad-hoc identitu `demo-{rezervace}-{příjmení}`. Session flag je v `localStorage` (`otelapps_web_authenticated`).
 
-Chráněné routy: `/requests/*`, `/orders`. Zbytek je veřejný.
+Chráněné routy: `/requests/*`, `/orders`. Zbytek je veřejný. Vypnutý modul (i veřejná URL) přesměruje na `/` (`ModuleRoute`).
+
+## Moduly
+
+Mapa přijde z `GET /api/public/hotel/{slug}/config`. Vypnutý modul zmizí z home / search / bottom nav **a** nejde otevřít. `concierge_chat` vyžaduje i parent `concierge`. Šablonu env: `php artisan hotel:env-files` ve WebAdminu. Overlay modulů: [README WebAdminu](../OtelApps-WebAdmin/README.md#hotel-a-moduly).
 
 ## Env
 
@@ -100,18 +108,18 @@ Chráněné routy: `/requests/*`, `/orders`. Zbytek je veřejný.
 |----------|------|
 | `VITE_SUPABASE_URL` | Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | anon / publishable klíč (ne service role) |
-| `VITE_WEBADMIN_URL` | Laravel origin pro Vite proxy v `npm run dev` |
-| `VITE_CONCIERGE_API_BASE` | produkce: jiný origin concierge API; prázdné = relativní `/api/...` |
-| `VITE_HOTEL_SLUG` | hotel v RPC, default `default` |
-| `VITE_HOTEL_LAT` / `VITE_HOTEL_LNG` | střed mapy |
-| `VITE_APP_STORE_URL` / `VITE_PLAY_STORE_URL` | odkazy na nativní appku |
+| `VITE_WEBADMIN_URL` | Laravel origin: Vite proxy v `npm run dev` (config + concierge) |
+| `VITE_CONCIERGE_API_BASE` | produkce: jiný origin API; prázdné = relativní `/api/...` |
+| `VITE_HOTEL_SLUG` | fallback slug, když URL není `/h/{slug}/` |
+| `VITE_HOTEL_LAT` / `VITE_HOTEL_LNG` | záloha středu mapy (jinak `geo` z public configu) |
+| `VITE_APP_STORE_URL` / `VITE_PLAY_STORE_URL` | záloha store odkazů (`stores` z public configu) |
 
 ## Routy
 
 | Cesta | Popis |
 |-------|--------|
-| `/` | Home |
-| `/info`, `/info/:slug` | Informace o hotelu |
+| `/h/{slug}/` | Home (basename; bez prefixu redirect) |
+| `/h/{slug}/info`, `…/info/:slug` | Informace o hotelu |
 | `/rooms`, `/rooms/:slug` | Nabídka pokojů |
 | `/parking`, `/parking/:slug` | Parkování |
 | `/restaurants`, `/restaurants/:slug`, `.../menu/...` | Restaurace, bary, menu |
@@ -127,11 +135,12 @@ Chráněné routy: `/requests/*`, `/orders`. Zbytek je veřejný.
 
 ```
 src/
-  lib/                supabase, identita hosta, hotel env
-  services/supabase/  port datové vrstvy z OtelApps
+  lib/                supabase, identita hosta, hotel env, module keys
+  services/           Supabase + hotelConfig
   hooks/              concierge chat + odeslání požadavku
-  contexts/           auth, service requests
+  contexts/           auth, service requests, modules
   components/layout/  shell, banner, navigace
+  components/ui/      ConfigGate, ModuleRoute, …
   pages/              obrazovky
   locales/            cs / en / de
 ```
@@ -141,4 +150,9 @@ Datové služby jsou zkopírované z mobilu (`OtelApps/src/services/supabase`), 
 ## Související repo
 
 - [OtelApps](../OtelApps) — Expo / React Native appka pro hosty
-- [OtelApps-WebAdmin](../OtelApps-WebAdmin) — Laravel + React administrace, concierge AI
+- [OtelApps-WebAdmin](../OtelApps-WebAdmin) — Laravel + React administrace, concierge AI, hotel config
+- [OtelApps-HQ](../OtelApps-HQ) — control plane (moduly, profil, nový hotel)
+
+---
+
+**Poslední aktualizace:** září 2026

@@ -23,6 +23,10 @@ export default defineConfig(({ mode }) => {
           target: webadmin,
           changeOrigin: true,
         },
+        '/api/public/hotel': {
+          target: webadmin,
+          changeOrigin: true,
+        },
       },
     },
   };

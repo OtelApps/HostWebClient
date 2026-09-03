@@ -291,6 +291,27 @@ function guestFacingApiError(text: string, fallback: string): string {
   return extracted || fallback;
 }
 
+function withHotelSlug(init: RequestInit): RequestInit {
+  if (typeof init.body !== 'string') {
+    return init;
+  }
+  try {
+    const parsed: unknown = JSON.parse(init.body);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      const body = parsed as Record<string, unknown>;
+      if (body.hotel_slug == null || body.hotel_slug === '') {
+        return {
+          ...init,
+          body: JSON.stringify({ ...body, hotel_slug: getHotelSlug() }),
+        };
+      }
+    }
+  } catch {
+    // raw body
+  }
+  return init;
+}
+
 async function fetchWebAdmin(
   path: string,
   init: RequestInit,
@@ -304,7 +325,7 @@ async function fetchWebAdmin(
   for (let attempt = 0; attempt < retries; attempt++) {
     for (const base of candidates) {
       try {
-        return await fetchWithTimeout(`${base}${path}`, init, timeoutMs);
+        return await fetchWithTimeout(`${base}${path}`, withHotelSlug(init), timeoutMs);
       } catch (e) {
         lastError = e;
         console.warn(`[concierge] WebAdmin unreachable: ${base || '(relative)'}`, e);

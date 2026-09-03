@@ -1,4 +1,5 @@
 import { SupabaseTables } from './tables';
+import { getHotelId, getHotelSlug } from '../../lib/hotel';
 import { getSupabase, supabaseConfigured } from '../../lib/supabase';
 
 export type RelaxSportAreaSlug = 'wellness-spa' | 'gym-sport';
@@ -33,6 +34,7 @@ export async function fetchRelaxSportHomeAreas(): Promise<RelaxSportHomeAreaRow[
     .select(
       'area_slug, home_title, home_image_key, list_screen, list_title, sort_order, enabled_area_count, section_title'
     )
+    .eq('hotel_slug', getHotelSlug())
     .order('sort_order');
 
   if (error) throw error;
@@ -44,12 +46,15 @@ export async function fetchRelaxSportArea(
   areaSlug: RelaxSportAreaSlug
 ): Promise<RelaxSportAreaRow | null> {
   if (!supabaseConfigured) return null;
+  const hotelId = await getHotelId();
+  if (!hotelId) return null;
 
   const supabase = getSupabase();
 
   const { data: instance, error: instanceError } = await supabase
     .from(SupabaseTables.hotelRelaxSport)
     .select('id')
+    .eq('hotel_id', hotelId)
     .eq('is_active', true)
     .maybeSingle();
 

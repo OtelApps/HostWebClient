@@ -1,4 +1,5 @@
 import { SupabaseTables } from './tables';
+import { getHotelId } from '../../lib/hotel';
 import { getSupabase, supabaseConfigured } from '../../lib/supabase';
 
 export type RoomServiceNavigationScreen = 'SnidaneScreen' | 'ObedScreen' | 'VecereScreen';
@@ -63,12 +64,15 @@ export type RoomServiceMenuDetail = {
 /** Karty pokojové služby (záložka Pokojová služba) */
 export async function fetchRoomServiceMenus(): Promise<RoomServiceMenuListRow[] | null> {
   if (!supabaseConfigured) return null;
+  const hotelId = await getHotelId();
+  if (!hotelId) return null;
 
   const { data, error } = await getSupabase()
     .from(SupabaseTables.hotelRoomServiceMenus)
     .select(
       'slug, title, list_label, list_schedule_summary, list_image_key, navigation_screen, sort_order'
     )
+    .eq('hotel_id', hotelId)
     .eq('is_active', true)
     .order('sort_order');
 
@@ -81,6 +85,8 @@ export async function fetchRoomServiceMenuDetail(
   menuSlug: string
 ): Promise<RoomServiceMenuDetail | null> {
   if (!supabaseConfigured) return null;
+  const hotelId = await getHotelId();
+  if (!hotelId) return null;
 
   const supabase = getSupabase();
 
@@ -89,6 +95,7 @@ export async function fetchRoomServiceMenuDetail(
     .select(
       'id, slug, title, description, schedule_summary, header_image_key, juice_modal_title, confirm_screen'
     )
+    .eq('hotel_id', hotelId)
     .eq('slug', menuSlug)
     .eq('is_active', true)
     .maybeSingle();

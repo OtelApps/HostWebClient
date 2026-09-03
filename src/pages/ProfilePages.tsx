@@ -7,12 +7,14 @@ import { KeyRound, Smartphone } from 'lucide-react';
 import { Button, EmptyBlock, ErrorBlock, LoadingBlock } from '../components/ui/Button';
 import { PageHeader } from '../components/ui/PageHeader';
 import { useAuth } from '../contexts/AuthContext';
+import { useHotelModules } from '../contexts/ModulesContext';
 import { clearGuestIdentity, getGuestIdentity, type GuestIdentity } from '../lib/guestIdentity';
 import { fetchGuestConciergeCaseSummaries } from '../services/supabase/concierge';
 
 export function ProfilePage() {
   const { t, i18n } = useTranslation();
   const { isAuthenticated, signOut } = useAuth();
+  const { isEnabled } = useHotelModules();
   const navigate = useNavigate();
   const [guest, setGuest] = useState<GuestIdentity | null>(null);
 
@@ -55,9 +57,11 @@ export function ProfilePage() {
         <Link to="/orders" className="rounded-2xl border border-line bg-white px-4 py-3 font-medium">
           {t('orderHistory')}
         </Link>
-        <Link to="/profile/chats" className="rounded-2xl border border-line bg-white px-4 py-3 font-medium">
-          {t('chatHistory')}
-        </Link>
+        {isEnabled('concierge_chat') ? (
+          <Link to="/profile/chats" className="rounded-2xl border border-line bg-white px-4 py-3 font-medium">
+            {t('chatHistory')}
+          </Link>
+        ) : null}
         <Link
           to="/app"
           className="flex items-center gap-3 rounded-2xl border border-accent/40 bg-orange-50 px-4 py-3 font-medium"

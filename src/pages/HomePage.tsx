@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 
 import { useAuth } from '../contexts/AuthContext';
+import { useHotelModules } from '../contexts/ModulesContext';
 import {
   markLoginPromptShown,
   useLoginPrompt,
@@ -19,10 +20,15 @@ type TileProps = {
   imageKey: string;
   accent?: boolean;
   protectedPath?: boolean;
+  moduleKey?: string;
 };
 
-function Tile({ to, title, imageKey, accent, protectedPath }: TileProps) {
+function Tile({ to, title, imageKey, accent, protectedPath, moduleKey }: TileProps) {
+  const { isEnabled } = useHotelModules();
   const { tryProtectedPath } = useLoginPrompt();
+  if (moduleKey && !isEnabled(moduleKey)) {
+    return null;
+  }
   const src = resolveImageUrl(imageKey);
 
   const inner = (
@@ -59,6 +65,7 @@ function Tile({ to, title, imageKey, accent, protectedPath }: TileProps) {
 
 export function HomePage() {
   const { t } = useTranslation();
+  const { isEnabled } = useHotelModules();
   const { isAuthenticated } = useAuth();
   const { openLoginPrompt } = useLoginPrompt();
   const navigate = useNavigate();
@@ -111,9 +118,11 @@ export function HomePage() {
             >
               {isAuthenticated ? t('requests') : t('signIn')}
             </button>
-            <Link to="/chat" className="rounded-full bg-white/15 px-4 py-2 text-sm font-semibold">
-              {t('chat')}
-            </Link>
+            {isEnabled('concierge_chat') && (
+              <Link to="/chat" className="rounded-full bg-white/15 px-4 py-2 text-sm font-semibold">
+                {t('chat')}
+              </Link>
+            )}
             <Link to="/search" className="rounded-full bg-white/15 px-4 py-2 text-sm font-semibold">
               {t('search')}
             </Link>
@@ -138,27 +147,29 @@ export function HomePage() {
       <section>
         <h2 className="mb-3 font-serif text-xl text-header">{t('navHotel')}</h2>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Tile to="/info" title={t('hotelInfo')} imageKey="informace" />
-          <Tile to="/rooms" title={t('roomsOffer')} imageKey="pokoje" />
-          <Tile to="/parking" title={t('parking')} imageKey="reception" />
-          <Tile to="/program" title={t('hotelProgram')} imageKey="hotelProgram" />
+          <Tile to="/info" title={t('hotelInfo')} imageKey="informace" moduleKey="hotel_info" />
+          <Tile to="/rooms" title={t('roomsOffer')} imageKey="pokoje" moduleKey="hotel_rooms" />
+          <Tile to="/parking" title={t('parking')} imageKey="reception" moduleKey="parking" />
+          <Tile to="/program" title={t('hotelProgram')} imageKey="hotelProgram" moduleKey="leisure" />
         </div>
       </section>
 
       <section>
         <h2 className="mb-3 font-serif text-xl text-header">{t('navGastro')}</h2>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Tile to="/restaurants" title={t('restaurantsBars')} imageKey="restauraceBar" />
+          <Tile to="/restaurants" title={t('restaurantsBars')} imageKey="restauraceBar" moduleKey="restaurants_bars" />
           <Tile
             to="/requests"
             title={t('roomService')}
             imageKey="roomServiceIcon"
             protectedPath
+            moduleKey="room_service"
           />
         </div>
       </section>
 
-      {(relax.data?.length ?? 0) > 0 ? (
+      {(isEnabled('wellness_spa') || isEnabled('sports') || isEnabled('relax_sport')) &&
+        ((relax.data?.length ?? 0) > 0 ? (
         <section>
           <h2 className="mb-3 font-serif text-xl text-header">
             {relax.data?.[0]?.section_title ?? t('relaxSport')}
@@ -170,6 +181,7 @@ export function HomePage() {
                 to={area.list_screen === 'WellnessSpaList' ? '/wellness' : '/fitness'}
                 title={area.home_title}
                 imageKey={area.home_image_key ?? (area.area_slug === 'wellness-spa' ? 'sauna' : 'gym')}
+                moduleKey={area.area_slug === 'wellness-spa' ? 'wellness_spa' : 'sports'}
               />
             ))}
           </div>
@@ -178,18 +190,18 @@ export function HomePage() {
         <section>
           <h2 className="mb-3 font-serif text-xl text-header">{t('relaxSport')}</h2>
           <div className="grid gap-3 sm:grid-cols-2">
-            <Tile to="/wellness" title={t('wellnessSpa')} imageKey="sauna" />
-            <Tile to="/fitness" title={t('gymSport')} imageKey="gym" />
+            <Tile to="/wellness" title={t('wellnessSpa')} imageKey="sauna" moduleKey="wellness_spa" />
+            <Tile to="/fitness" title={t('gymSport')} imageKey="gym" moduleKey="sports" />
           </div>
         </section>
-      )}
+      ))}
 
       <section>
         <h2 className="mb-3 font-serif text-xl text-header">{t('navPrague')}</h2>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Tile to="/map" title={t('pragueMapTitle')} imageKey="prague" />
-          <Tile to="/transport" title={t('transport')} imageKey="metro" />
-          <Tile to="/app" title={t('tripPlanner')} imageKey="homeMap" accent />
+          <Tile to="/map" title={t('pragueMapTitle')} imageKey="prague" moduleKey="places_of_interest" />
+          <Tile to="/transport" title={t('transport')} imageKey="metro" moduleKey="transportation" />
+          <Tile to="/app" title={t('tripPlanner')} imageKey="homeMap" accent moduleKey="where_to_go" />
         </div>
       </section>
 

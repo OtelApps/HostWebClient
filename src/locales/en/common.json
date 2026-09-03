@@ -94,6 +94,7 @@
   "empty": "Nothing here yet.",
   "error": "Could not load data.",
   "retry": "Try again",
+  "configUnavailable": "The hotel app can’t start right now. Check your connection and try again.",
   "confirm": "Confirm",
   "send": "Send",
   "cancel": "Cancel",

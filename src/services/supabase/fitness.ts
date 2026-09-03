@@ -1,4 +1,5 @@
 import { SupabaseTables } from './tables';
+import { getHotelId } from '../../lib/hotel';
 import { getSupabase, supabaseConfigured } from '../../lib/supabase';
 
 export type FitnessFacilityRow = {
@@ -32,6 +33,8 @@ export type FitnessFacilityListItem = FitnessFacilityRow & {
 /** Seznam oblastí Posilovna & Sport */
 export async function fetchFitnessFacilities(): Promise<FitnessFacilityListItem[] | null> {
   if (!supabaseConfigured) return null;
+  const hotelId = await getHotelId();
+  if (!hotelId) return null;
 
   const { data, error } = await getSupabase()
     .from(SupabaseTables.fitnessFacilities)
@@ -53,6 +56,7 @@ export async function fetchFitnessFacilities(): Promise<FitnessFacilityListItem[
       )
     `
     )
+    .eq('hotel_id', hotelId)
     .eq('is_active', true)
     .order('sort_order');
 
@@ -81,6 +85,8 @@ export async function fetchFitnessFacilityDetail(facilitySlug: string): Promise<
   images: FitnessFacilityImageRow[];
 } | null> {
   if (!supabaseConfigured) return null;
+  const hotelId = await getHotelId();
+  if (!hotelId) return null;
 
   const supabase = getSupabase();
 
@@ -89,6 +95,7 @@ export async function fetchFitnessFacilityDetail(facilitySlug: string): Promise<
     .select(
       'id, slug, title, list_label, schedule_summary, description_long, image_key, detail_screen, sort_order'
     )
+    .eq('hotel_id', hotelId)
     .eq('slug', facilitySlug)
     .eq('is_active', true)
     .maybeSingle();

@@ -7,6 +7,7 @@ import { Search as SearchIcon } from 'lucide-react';
 import { PageHeader } from '../components/ui/PageHeader';
 import { EmptyBlock, LoadingBlock } from '../components/ui/Button';
 import { useLoginPrompt } from '../contexts/LoginPromptContext';
+import { useHotelModules } from '../contexts/ModulesContext';
 import { fetchHotelInfoTopics } from '../services/supabase/hotelInfo';
 import { fetchHotelRoomTypes } from '../services/supabase/rooms';
 import { fetchVenues } from '../services/supabase/restaurants';
@@ -18,6 +19,7 @@ type Hit = {
   title: string;
   path: string;
   protected?: boolean;
+  module?: string;
 };
 
 function norm(value: string) {
@@ -30,68 +32,94 @@ function norm(value: string) {
 export function SearchPage() {
   const { t } = useTranslation();
   const { tryProtectedPath } = useLoginPrompt();
+  const { isEnabled } = useHotelModules();
   const [query, setQuery] = useState('');
-  const info = useQuery({ queryKey: ['hotel-info'], queryFn: fetchHotelInfoTopics });
-  const rooms = useQuery({ queryKey: ['rooms'], queryFn: fetchHotelRoomTypes });
-  const venues = useQuery({ queryKey: ['venues'], queryFn: fetchVenues });
-  const wellness = useQuery({ queryKey: ['wellness'], queryFn: fetchWellnessFacilities });
-  const fitness = useQuery({ queryKey: ['fitness'], queryFn: fetchFitnessFacilities });
+  const info = useQuery({
+    queryKey: ['hotel-info'],
+    queryFn: fetchHotelInfoTopics,
+    enabled: isEnabled('hotel_info'),
+  });
+  const rooms = useQuery({
+    queryKey: ['rooms'],
+    queryFn: fetchHotelRoomTypes,
+    enabled: isEnabled('hotel_rooms'),
+  });
+  const venues = useQuery({
+    queryKey: ['venues'],
+    queryFn: fetchVenues,
+    enabled: isEnabled('restaurants_bars'),
+  });
+  const wellness = useQuery({
+    queryKey: ['wellness'],
+    queryFn: fetchWellnessFacilities,
+    enabled: isEnabled('wellness_spa'),
+  });
+  const fitness = useQuery({
+    queryKey: ['fitness'],
+    queryFn: fetchFitnessFacilities,
+    enabled: isEnabled('sports'),
+  });
 
   const loading =
     info.isLoading || rooms.isLoading || venues.isLoading || wellness.isLoading || fitness.isLoading;
 
   const hits = useMemo(() => {
     const modules: Hit[] = [
-      { id: 'info', title: t('hotelInfo'), path: '/info' },
-      { id: 'rooms', title: t('roomsOffer'), path: '/rooms' },
-      { id: 'parking', title: t('parking'), path: '/parking' },
-      { id: 'restaurants', title: t('restaurantsBars'), path: '/restaurants' },
-      { id: 'wellness', title: t('wellnessSpa'), path: '/wellness' },
-      { id: 'fitness', title: t('gymSport'), path: '/fitness' },
-      { id: 'program', title: t('hotelProgram'), path: '/program' },
-      { id: 'map', title: t('pragueMapTitle'), path: '/map' },
-      { id: 'transport', title: t('transport'), path: '/transport' },
-      { id: 'chat', title: t('chat'), path: '/chat' },
-      { id: 'requests', title: t('requests'), path: '/requests', protected: true },
-      { id: 'housekeeping', title: t('housekeeping'), path: '/requests/housekeeping', protected: true },
-      { id: 'supplies', title: t('suppliesShort'), path: '/requests/supplies', protected: true },
-      { id: 'maintenance', title: t('maintenanceShort'), path: '/requests/maintenance', protected: true },
-      { id: 'room-service', title: t('roomServiceShort'), path: '/requests/room-service', protected: true },
-    ];
+      { id: 'info', title: t('hotelInfo'), path: '/info', module: 'hotel_info' },
+      { id: 'rooms', title: t('roomsOffer'), path: '/rooms', module: 'hotel_rooms' },
+      { id: 'parking', title: t('parking'), path: '/parking', module: 'parking' },
+      { id: 'restaurants', title: t('restaurantsBars'), path: '/restaurants', module: 'restaurants_bars' },
+      { id: 'wellness', title: t('wellnessSpa'), path: '/wellness', module: 'wellness_spa' },
+      { id: 'fitness', title: t('gymSport'), path: '/fitness', module: 'sports' },
+      { id: 'program', title: t('hotelProgram'), path: '/program', module: 'leisure' },
+      { id: 'map', title: t('pragueMapTitle'), path: '/map', module: 'places_of_interest' },
+      { id: 'transport', title: t('transport'), path: '/transport', module: 'transportation' },
+      { id: 'chat', title: t('chat'), path: '/chat', module: 'concierge_chat' },
+      { id: 'requests', title: t('requests'), path: '/requests', protected: true, module: 'requests' },
+      { id: 'housekeeping', title: t('housekeeping'), path: '/requests/housekeeping', protected: true, module: 'laundry' },
+      { id: 'supplies', title: t('suppliesShort'), path: '/requests/supplies', protected: true, module: 'amenities' },
+      { id: 'maintenance', title: t('maintenanceShort'), path: '/requests/maintenance', protected: true, module: 'issues_repairs' },
+      { id: 'room-service', title: t('roomServiceShort'), path: '/requests/room-service', protected: true, module: 'room_service' },
+    ].filter((item) => !item.module || isEnabled(item.module));
 
     const catalog: Hit[] = [
-      ...(info.data ?? []).map((row) => ({
+      ...(isEnabled('hotel_info') ? (info.data ?? []) : []).map((row) => ({
         id: `info-${row.slug}`,
         title: row.title,
         path: `/info/${row.slug}`,
+        module: 'hotel_info',
       })),
-      ...(rooms.data ?? []).map((row) => ({
+      ...(isEnabled('hotel_rooms') ? (rooms.data ?? []) : []).map((row) => ({
         id: `room-${row.slug}`,
         title: row.title,
         path: `/rooms/${row.slug}`,
+        module: 'hotel_rooms',
       })),
-      ...(venues.data ?? []).map((row) => ({
+      ...(isEnabled('restaurants_bars') ? (venues.data ?? []) : []).map((row) => ({
         id: `venue-${row.slug}`,
         title: row.title,
         path: `/restaurants/${row.slug}`,
+        module: 'restaurants_bars',
       })),
-      ...(wellness.data ?? []).map((row) => ({
+      ...(isEnabled('wellness_spa') ? (wellness.data ?? []) : []).map((row) => ({
         id: `wellness-${row.slug}`,
         title: row.title,
         path: `/wellness/${row.slug}`,
+        module: 'wellness_spa',
       })),
-      ...(fitness.data ?? []).map((row) => ({
+      ...(isEnabled('sports') ? (fitness.data ?? []) : []).map((row) => ({
         id: `fitness-${row.slug}`,
         title: row.title,
         path: `/fitness/${row.slug}`,
+        module: 'sports',
       })),
-    ];
+    ].filter((item) => !item.module || isEnabled(item.module));
 
     const all = [...modules, ...catalog];
     const q = norm(query.trim());
     if (!q) return all.slice(0, 16);
     return all.filter((hit) => norm(hit.title).includes(q));
-  }, [fitness.data, info.data, query, rooms.data, t, venues.data, wellness.data]);
+  }, [fitness.data, info.data, isEnabled, query, rooms.data, t, venues.data, wellness.data]);
 
   return (
     <div>

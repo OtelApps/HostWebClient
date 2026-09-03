@@ -1,4 +1,5 @@
 import { SupabaseTables } from './tables';
+import { getHotelId } from '../../lib/hotel';
 import { getSupabase, supabaseConfigured } from '../../lib/supabase';
 
 export type WellnessFacilityRow = {
@@ -53,6 +54,8 @@ export function formatDurationMinutes(minutes: number): string {
 /** Seznam oblastí (Wellness & SPA) */
 export async function fetchWellnessFacilities(): Promise<WellnessFacilityListItem[] | null> {
   if (!supabaseConfigured) return null;
+  const hotelId = await getHotelId();
+  if (!hotelId) return null;
 
   const { data, error } = await getSupabase()
     .from(SupabaseTables.wellnessFacilities)
@@ -74,6 +77,7 @@ export async function fetchWellnessFacilities(): Promise<WellnessFacilityListIte
       )
     `
     )
+    .eq('hotel_id', hotelId)
     .eq('is_active', true)
     .order('sort_order');
 
@@ -102,6 +106,8 @@ export async function fetchWellnessFacilityDetail(facilitySlug: string): Promise
   services: WellnessServiceRow[];
 } | null> {
   if (!supabaseConfigured) return null;
+  const hotelId = await getHotelId();
+  if (!hotelId) return null;
 
   const supabase = getSupabase();
 
@@ -110,6 +116,7 @@ export async function fetchWellnessFacilityDetail(facilitySlug: string): Promise
     .select(
       'id, slug, title, list_label, schedule_summary, description_long, image_key, detail_screen, sort_order'
     )
+    .eq('hotel_id', hotelId)
     .eq('slug', facilitySlug)
     .eq('is_active', true)
     .maybeSingle();
@@ -147,10 +154,13 @@ export async function fetchWellnessFacilityDetail(facilitySlug: string): Promise
 /** Hotelový program — akce podle dne v týdnu */
 export async function fetchWellnessProgramEvents(): Promise<WellnessProgramEventRow[] | null> {
   if (!supabaseConfigured) return null;
+  const hotelId = await getHotelId();
+  if (!hotelId) return null;
 
   const { data, error } = await getSupabase()
     .from(SupabaseTables.wellnessProgramEvents)
     .select('day_order, start_time, title, description, sort_order')
+    .eq('hotel_id', hotelId)
     .eq('is_active', true)
     .order('day_order')
     .order('start_time')
